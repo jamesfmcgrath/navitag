@@ -1,0 +1,22 @@
+services:
+  navitag:
+    image: ghcr.io/jamesfmcgrath/navitag:latest
+    container_name: navitag
+    restart: unless-stopped
+    # Run as the user that owns your music files (check with: ls -ln /path/to/music).
+    user: "1000:1000"
+    ports:
+      # Bind to localhost and put a VPN or authenticating reverse proxy in front,
+      # or set NAVITAG_PASSWORD below.
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - /path/to/music:/music
+    environment:
+      NAVITAG_TITLE: "My music"
+      # NAVITAG_PASSWORD: "change-me-to-something-long"
+      # NAVITAG_SECRET_KEY: "random-string-so-logins-survive-restarts"
+      # NAVITAG_COOKIE_SECURE: "true"   # when served over HTTPS
+      # Optional "Rescan library" button (Navidrome or another Subsonic server; user must be admin):
+      # NAVIDROME_URL: "http://navidrome:4533"
+      # NAVIDROME_USER: "admin"
+      # NAVIDROME_PASSWORD: "..."

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ app_title }}{% endblock %} · {{ app_title }}</title>
+<style>
+  :root {
+    --bg: #fafaf9; --fg: #1c1917; --muted: #57534e; --line: #d6d3d1;
+    --panel: #ffffff; --accent: #1d4ed8; --ok-bg: #dcfce7; --ok-fg: #14532d;
+    --err-bg: #fee2e2; --err-fg: #7f1d1d; --focus: #f59e0b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1917; --fg: #f5f5f4; --muted: #a8a29e; --line: #44403c;
+      --panel: #292524; --accent: #93c5fd; --ok-bg: #14532d; --ok-fg: #dcfce7;
+      --err-bg: #7f1d1d; --err-fg: #fee2e2; --focus: #fbbf24;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .skip { position: absolute; left: -9999px; }
+  .skip:focus { left: 1rem; top: 1rem; background: var(--panel); padding: .5rem 1rem; z-index: 10; }
+  header, main, footer { max-width: 72rem; margin: 0 auto; padding: 1rem; }
+  header .actions { margin: 0; }
+  .login { max-width: 22rem; }
+  header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  h1 { font-size: 1.25rem; margin: 0; }
+  h2 { font-size: 1.1rem; margin: 1.5rem 0 .5rem; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  nav.crumbs ol { list-style: none; padding: 0; margin: 0 0 1rem; display: flex; flex-wrap: wrap; gap: .25rem; }
+  nav.crumbs li + li::before { content: "/"; color: var(--muted); margin-right: .25rem; }
+  ul.dirs { list-style: none; padding: 0; columns: 16rem; }
+  ul.dirs li { padding: .15rem 0; break-inside: avoid; }
+  .msg { padding: .75rem 1rem; border-radius: .375rem; margin: 0 0 1rem; }
+  .msg.ok { background: var(--ok-bg); color: var(--ok-fg); }
+  .msg.error { background: var(--err-bg); color: var(--err-fg); }
+  fieldset { border: 1px solid var(--line); border-radius: .375rem; background: var(--panel); padding: 1rem; margin: 0 0 1rem; }
+  legend { font-weight: 600; padding: 0 .25rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .75rem 1rem; }
+  label { display: block; font-weight: 500; margin-bottom: .2rem; }
+  input[type=text], input[type=password] { width: 100%; padding: .4rem .5rem; font: inherit; color: var(--fg);
+                     background: var(--bg); border: 1px solid var(--line); border-radius: .25rem; }
+  .hint { color: var(--muted); font-size: .875rem; margin: .2rem 0 0; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; min-width: 40rem; border-collapse: collapse; }
+  th, td { text-align: left; padding: .35rem .4rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { font-weight: 600; white-space: nowrap; }
+  td.file { color: var(--muted); font-size: .875rem; max-width: 14rem; overflow-wrap: anywhere; }
+  td.num input { width: 4.5rem; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  button { font: inherit; padding: .5rem 1rem; border-radius: .375rem; border: 1px solid var(--accent);
+           background: var(--accent); color: var(--bg); cursor: pointer; }
+  button.secondary { background: transparent; color: var(--accent); }
+  .actions { display: flex; gap: .75rem; align-items: center; margin: 1rem 0; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header>
+  <h1><a href="{{ url_for('browse') }}">{{ app_title }}</a></h1>
+  <div class="actions">
+    {% block header_actions %}{% endblock %}
+    {% if login_enabled and session.get('auth') %}
+    <form method="post" action="{{ url_for('logout') }}">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      <button class="secondary" type="submit">Log out</button>
+    </form>
+    {% endif %}
+  </div>
+</header>
+<main id="main">
+  <div role="status" aria-live="polite">
+  {% for category, message in get_flashed_messages(with_categories=true) %}
+    <p class="msg {{ category }}">{{ message }}</p>
+  {% endfor %}
+  </div>
+  {% block content %}{% endblock %}
+</main>
+<footer><p class="hint">navitag {{ version }}</p></footer>
+</body>
+</html>

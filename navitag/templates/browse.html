@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}{{ crumbs[-1][0] if crumbs else "Music" }}{% endblock %}
+
+{% block header_actions %}
+{% if can_rescan %}
+<form method="post" action="{{ url_for('rescan') }}">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <input type="hidden" name="back" value="{{ rel }}">
+  <button class="secondary" type="submit">Rescan library</button>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<nav class="crumbs" aria-label="Folder path">
+  <ol>
+    <li><a href="{{ url_for('browse') }}">Music</a></li>
+    {% for name, path in crumbs %}
+      <li>{% if loop.last %}<span aria-current="page">{{ name }}</span>{% else %}<a href="{{ url_for('browse', rel=path) }}">{{ name }}</a>{% endif %}</li>
+    {% endfor %}
+  </ol>
+</nav>
+
+{% if dirs %}
+<h2>Folders <span class="hint">({{ dirs|length }})</span></h2>
+<ul class="dirs">
+  {% for name, path in dirs %}<li><a href="{{ url_for('browse', rel=path) }}">{{ name }}</a></li>{% endfor %}
+</ul>
+{% endif %}
+
+{% for e in errors %}<p class="msg error">{{ e }}</p>{% endfor %}
+
+{% if tracks %}
+<h2 id="tracks-heading">Tracks <span class="hint">({{ tracks|length }})</span></h2>
+<form method="post" action="{{ url_for('save_folder', rel=rel) }}" aria-labelledby="tracks-heading">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <input type="hidden" name="count" value="{{ tracks|length }}">
+
+  <fieldset>
+    <legend>All tracks in this folder</legend>
+    <div class="grid">
+    {% for key, f in album.items() %}
+      <div>
+        <label for="album__{{ key }}">{{ f.label }}</label>
+        <input type="text" id="album__{{ key }}" name="album__{{ key }}" value="{{ f.value }}"
+               {% if f.mixed %}placeholder="Mixed values" aria-describedby="album__{{ key }}__hint"{% endif %}>
+        {% if f.mixed %}
+        <input type="hidden" name="album__{{ key }}__mixed" value="1">
+        <p class="hint" id="album__{{ key }}__hint">Mixed. Leave empty to keep each track's value, or type to set all.</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+    </div>
+    <p class="hint">Clearing a field that is not mixed removes that tag from every track.</p>
+  </fieldset>
+
+  <div class="table-wrap">
+  <table>
+    <caption class="visually-hidden">Per-track tags</caption>
+    <thead><tr><th scope="col">File</th>{% for key, label in track_fields %}<th scope="col">{{ label }}</th>{% endfor %}</tr></thead>
+    <tbody>
+    {% for t in tracks %}{% set i = loop.index0 %}
+      <tr>
+        <td class="file">{{ t.name }}<input type="hidden" name="t{{ i }}__file" value="{{ t.name }}"></td>
+        {% for key, label in track_fields %}
+        <td{% if key == 'tracknumber' %} class="num"{% endif %}>
+          <label class="visually-hidden" for="t{{ i }}__{{ key }}">{{ label }}, {{ t.name }}</label>
+          <input type="text" id="t{{ i }}__{{ key }}" name="t{{ i }}__{{ key }}" value="{{ t.tags[key] }}">
+        </td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+  <div class="actions">
+    <button type="submit">Save changes</button>
+    <a href="{{ url_for('browse', rel=rel) }}">Discard changes</a>
+  </div>
+  <p class="hint">Only files whose tags actually change are rewritten. MP3s are saved as ID3v2.{{ id3_version }}.</p>
+</form>
+{% elif not dirs %}
+<p>No folders or audio files here.</p>
+{% endif %}
+{% endblock %}
